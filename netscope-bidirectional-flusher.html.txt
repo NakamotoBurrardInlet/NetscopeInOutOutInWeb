@@ -1,0 +1,1287 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NetScope v2 — Full Inbound/Outbound Packet Tracer, Cache & Port Flusher</title>
+  <style>
+    :root {
+      --bg-app: #090d16;
+      --bg-panel: #111827;
+      --bg-card: #1e293b;
+      --bg-hover: #334155;
+      --border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-dim: rgba(56, 189, 248, 0.14);
+      --inbound: #a855f7;
+      --outbound: #38bdf8;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+
+    body {
+      background-color: var(--bg-app);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.45;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+
+    header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+
+    .brand-badge {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-family: var(--font-mono);
+    }
+
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 270px 1fr 350px;
+      gap: 14px;
+      padding: 14px;
+      flex: 1;
+    }
+
+
+    @media (max-width: 1150px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+
+
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+
+    .panel-header {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+
+    .panel-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+
+
+    .panel-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+    }
+
+
+    button {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 6px 11px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+
+    button:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent);
+    }
+
+
+    button.primary {
+      background: var(--accent);
+      color: #031525;
+      font-weight: 700;
+      border-color: var(--accent);
+    }
+
+
+    button.danger {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.08);
+    }
+
+
+    button.danger:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+
+    button.warn {
+      border-color: var(--warning);
+      color: var(--warning);
+      background: rgba(245, 158, 11, 0.08);
+    }
+
+
+    input, select, textarea {
+      background: var(--bg-app);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 9px;
+      font-size: 0.82rem;
+      width: 100%;
+    }
+
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+
+    .item-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+
+    .item-card:hover {
+      border-color: var(--accent);
+    }
+
+
+    .item-card.active {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+
+
+    .item-name {
+      font-weight: 600;
+      font-size: 0.88rem;
+    }
+
+
+    .item-meta {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+
+    /* Pills */
+    .pill {
+      font-size: 0.69rem;
+      font-family: var(--font-mono);
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-weight: 700;
+      display: inline-block;
+    }
+
+
+    .pill.out {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--outbound);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+
+    .pill.in {
+      background: rgba(168, 85, 247, 0.15);
+      color: var(--inbound);
+      border: 1px solid rgba(168, 85, 247, 0.4);
+    }
+
+
+    .pill.hit, .pill.open {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+    }
+
+
+    .pill.miss, .pill.closed {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+
+    .pill.flushed, .pill.blocked {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+
+    /* Metrics Strip */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+
+    @media (max-width: 760px) {
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+
+    .metric-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 10px;
+    }
+
+
+    .metric-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+
+    .metric-value {
+      font-size: 1.08rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      margin-top: 2px;
+    }
+
+
+    /* Filter & Flush Toolbar */
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+
+    /* Packet Trace Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.79rem;
+    }
+
+
+    th {
+      text-align: left;
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 7px 8px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+
+    td {
+      padding: 7px 8px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      font-family: var(--font-mono);
+      vertical-align: middle;
+    }
+
+
+    tr.flagged-row {
+      background: rgba(239, 68, 68, 0.08);
+    }
+
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+
+    /* Port Grid */
+    .port-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+      gap: 8px;
+    }
+
+
+    .port-tile {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 8px;
+      font-family: var(--font-mono);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+
+    .port-tile.flushed-port {
+      border-color: var(--danger);
+      opacity: 0.72;
+    }
+
+
+    .port-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+
+    .port-number {
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+
+    .port-service {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+
+    .script-box {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      min-height: 95px;
+      background: #050811;
+      color: #7dd3fc;
+      resize: vertical;
+    }
+
+
+    .log-stream {
+      background: #050811;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px;
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      max-height: 185px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+
+    .log-line {
+      color: #cbd5e1;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span>NetScope Bidirectional Tracer</span>
+      <span class="brand-badge">OUT⇄IN TRACE + FLUSH v2.0</span>
+    </div>
+    <div class="header-actions">
+      <button id="btn-flush-unwanted" class="warn">Flush Unwanted Packets</button>
+      <button id="btn-flush-ports" class="danger">Flush Blocked Ports</button>
+      <button id="btn-clear-cache" class="danger">Flush App Cache</button>
+      <button id="btn-run-trace" class="primary">Run Out⇄In Trace</button>
+    </div>
+  </header>
+
+
+  <div class="workspace">
+    <!-- LEFT PANEL: Network Apps & Plugins -->
+    <section class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Network Apps</span>
+        <span class="item-meta">3 profiles</span>
+      </div>
+      <div class="panel-body">
+        <div id="app-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+
+
+        <div class="panel-header" style="margin: 6px -14px 0; border-top: 1px solid var(--border);">
+          <span class="panel-title">Trace & Flush Plugins</span>
+        </div>
+        <div id="plugin-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+    </section>
+
+
+    <!-- CENTER PANEL: Full Outbound -> Inbound -> Outbound -> Inbound Trace Stream -->
+    <section class="panel">
+      <div class="panel-header">
+        <span class="panel-title" id="active-app-title">Bidirectional Packet Trace</span>
+        <label style="display:flex; align-items:center; gap:6px; font-size:0.78rem; cursor:pointer;">
+          <input type="checkbox" id="toggle-cache-policy" checked style="width:auto;" />
+          <span>App Cache Enabled</span>
+        </label>
+      </div>
+      <div class="panel-body">
+        <!-- Live Telemetry Strip -->
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="metric-label">Outbound Frames</div>
+            <div class="metric-value" id="metric-out">0</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Inbound Frames</div>
+            <div class="metric-value" id="metric-in">0</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Unwanted / Flagged</div>
+            <div class="metric-value" id="metric-unwanted" style="color:var(--danger);">0</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Cache Hit Ratio</div>
+            <div class="metric-value" id="metric-hit-ratio">0%</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Flushed Total</div>
+            <div class="metric-value" id="metric-flushed">0</div>
+          </div>
+        </div>
+
+
+        <!-- Request & Trace Controls -->
+        <div class="toolbar">
+          <select id="endpoint-select" style="flex:1; min-width:200px;"></select>
+          <button id="btn-trace-cached">Trace (Cached)</button>
+          <button id="btn-trace-live">Trace (Live Wire)</button>
+          <button id="btn-inject-noise" class="warn">Simulate Unwanted Packet</button>
+        </div>
+
+
+        <!-- Filter & Flush Controls -->
+        <div class="toolbar">
+          <select id="dir-filter" style="width:auto;">
+            <option value="ALL">All Directions (OUT & IN)</option>
+            <option value="OUT">Outbound Only (OUT →)</option>
+            <option value="IN">Inbound Only (← IN)</option>
+            <option value="UNWANTED">Unwanted / Flagged Only</option>
+          </select>
+          <input type="text" id="packet-filter-input" placeholder="Filter by URL, port, status, or hop..." style="flex:1;" />
+          <button id="btn-flush-matching" class="danger">Flush Matching</button>
+        </div>
+
+
+        <!-- Packet Trace Table -->
+        <div style="overflow-x:auto; max-height:310px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Seq / Hop</th>
+                <th>Direction</th>
+                <th>Endpoint & Port</th>
+                <th>Cache / State</th>
+                <th>Size & RTT</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="packet-table-body"></tbody>
+          </table>
+        </div>
+
+
+        <!-- Adaptive Packet & Port Policy Script -->
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <span class="panel-title">Adaptive Packet & Port Filter Script</span>
+            <button id="btn-apply-script">Apply Policy</button>
+          </div>
+          <textarea id="adaptive-script" class="script-box" spellcheck="false">// Return { unwanted: true, reason: "..." } to flag/flush packets automatically
+if (packet.unwanted || packet.status >= 400 || packet.durationMs > 850) {
+  return { unwanted: true, reason: "Policy violation / high latency" };
+}
+return { unwanted: false };</textarea>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- RIGHT PANEL: Port Inspector, Port Flusher & Event Log -->
+    <section class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Port Inspector & Port Flusher</span>
+      </div>
+      <div class="panel-body">
+        <div style="display:flex; gap:6px;">
+          <input type="number" id="custom-port-input" placeholder="Port (e.g. 8080)" min="1" max="65535" />
+          <button id="btn-add-port">Add</button>
+          <button id="btn-probe-ports" class="primary">Probe</button>
+        </div>
+
+
+        <div class="port-grid" id="port-grid"></div>
+
+
+        <div class="panel-header" style="margin: 4px -14px 0; border-top: 1px solid var(--border);">
+          <span class="panel-title">Flush & Trace Audit Log</span>
+        </div>
+        <div class="log-stream" id="event-log"></div>
+      </div>
+    </section>
+  </div>
+
+
+  <script>
+    /**
+     * 1. PLUGIN ENGINE
+     */
+    class TracePluginManager {
+      constructor() {
+        this.plugins = new Map();
+      }
+      register(plugin) {
+        this.plugins.set(plugin.id, { ...plugin, enabled: true });
+      }
+      toggle(id) {
+        const p = this.plugins.get(id);
+        if (p) p.enabled = !p.enabled;
+      }
+      async emit(hook, data) {
+        for (const plugin of this.plugins.values()) {
+          if (plugin.enabled && typeof plugin[hook] === "function") {
+            try {
+              await plugin[hook](data);
+            } catch (err) {
+              logEvent(`[Plugin:${plugin.id}] ${err.message}`);
+            }
+          }
+        }
+      }
+    }
+
+
+    const plugins = new TracePluginManager();
+
+
+    plugins.register({
+      id: "bidirectional-tracer",
+      name: "Out⇄In Hop Tracer",
+      description: "Logs full outbound request and inbound response frame pairs.",
+      onPacket(pkt) {
+        logEvent(`[${pkt.direction}] #${pkt.seq} ${pkt.shortUrl} (${pkt.state})`);
+      }
+    });
+
+
+    plugins.register({
+      id: "unwanted-packet-guard",
+      name: "Unwanted Packet Guard",
+      description: "Flags noisy/unauthorized packets and tracks flush events.",
+      onFlush(info) {
+        logEvent(`[FlushGuard] Flushed ${info.count} packet(s) (${info.reason})`);
+      }
+    });
+
+
+    plugins.register({
+      id: "port-flusher-plugin",
+      name: "Port State & Socket Flusher",
+      description: "Blocks/flushes unwanted local ports from active endpoint sweeps.",
+      onPortFlush(portObj) {
+        logEvent(`[PortFlusher] Port :${portObj.port} (${portObj.service}) flushed & blocked`);
+      }
+    });
+
+
+    /**
+     * 2. APPS, PORTS & STATE
+     */
+    const networkApps = [
+      {
+        id: "weather-stream",
+        name: "WeatherPulse Telemetry",
+        category: "REST Stream",
+        cacheEnabled: true,
+        endpoints: [
+          "https://api.open-meteo.com/v1/forecast?latitude=49.2827&longitude=-123.1207&current_weather=true",
+          "https://api.open-meteo.com/v1/forecast?latitude=45.5017&longitude=-73.5673&current_weather=true"
+        ]
+      },
+      {
+        id: "iss-orbital",
+        name: "Orbital ISS Bus",
+        category: "Telemetry",
+        cacheEnabled: true,
+        endpoints: [
+          "https://api.wheretheiss.at/v1/satellites/25544"
+        ]
+      },
+      {
+        id: "json-bus",
+        name: "JSON Control Plane",
+        category: "API Gateway",
+        cacheEnabled: true,
+        endpoints: [
+          "https://jsonplaceholder.typicode.com/posts/1",
+          "https://jsonplaceholder.typicode.com/users/1"
+        ]
+      }
+    ];
+
+
+    let monitoredPorts = [
+      { port: 80, service: "HTTP", status: "UNKNOWN", isOpen: false, flushed: false },
+      { port: 443, service: "HTTPS", status: "UNKNOWN", isOpen: false, flushed: false },
+      { port: 3000, service: "Node/React", status: "UNKNOWN", isOpen: false, flushed: false },
+      { port: 5173, service: "Vite Dev", status: "UNKNOWN", isOpen: false, flushed: false },
+      { port: 8000, service: "Python API", status: "UNKNOWN", isOpen: false, flushed: false },
+      { port: 8080, service: "Alt Proxy", status: "UNKNOWN", isOpen: false, flushed: false }
+    ];
+
+
+    let activeAppId = networkApps[0].id;
+    let packetSeq = 1;
+    let totalFlushedPackets = 0;
+    let packetLog = [];
+    const memoryCache = new Map();
+
+
+    function compilePolicy(code) {
+      try {
+        return new Function("packet", code);
+      } catch (e) {
+        logEvent(`[PolicyError] ${e.message}`);
+        return () => ({ unwanted: false });
+      }
+    }
+
+
+    let evaluatePacketPolicy = compilePolicy(document.getElementById("adaptive-script").value);
+
+
+    function getActiveApp() {
+      return networkApps.find((a) => a.id === activeAppId) || networkApps[0];
+    }
+
+
+    function extractPort(url) {
+      try {
+        const u = new URL(url);
+        if (u.port) return Number(u.port);
+        return u.protocol === "https:" ? 443 : 80;
+      } catch {
+        return 0;
+      }
+    }
+
+
+    /**
+     * 3. FULL OUT -> IN -> OUT -> IN BIDIRECTIONAL TRACING
+     */
+    async function traceBidirectionalExchange(url, bypassCache = false) {
+      const app = getActiveApp();
+      const port = extractPort(url);
+      const portEntry = monitoredPorts.find((p) => p.port === port);
+
+
+      // Block if port was flushed
+      if (portEntry && portEntry.flushed) {
+        const blockedPkt = createPacketRecord({
+          appId: app.id,
+          direction: "OUT",
+          hop: "OUT-1 (BLOCKED)",
+          url,
+          port,
+          state: "PORT FLUSHED",
+          status: 403,
+          sizeBytes: 0,
+          durationMs: 0,
+          unwanted: true
+        });
+        packetLog.unshift(blockedPkt);
+        await plugins.emit("onPacket", blockedPkt);
+        renderAll();
+        return;
+      }
+
+
+      // HOP 1: OUTBOUND REQUEST FRAME (OUT ->)
+      const outStart = performance.now();
+      const outPacket = createPacketRecord({
+        appId: app.id,
+        direction: "OUT",
+        hop: bypassCache ? "OUT-1 (LIVE WIRE)" : "OUT-1 (CACHE CHECK)",
+        url,
+        port,
+        state: bypassCache ? "SYN / GET" : "LOOKUP",
+        status: 0,
+        sizeBytes: new Blob([url]).size + 128,
+        durationMs: 1,
+        unwanted: false
+      });
+      packetLog.unshift(outPacket);
+      await plugins.emit("onPacket", outPacket);
+
+
+      // CACHE OR NETWORK RESOLUTION
+      const bucket = `netscope-v2:${app.id}`;
+      const hasCacheApi = "caches" in window;
+      let cachedHit = false;
+      let bodyText = "";
+      let status = 200;
+
+
+      if (app.cacheEnabled && !bypassCache) {
+        if (hasCacheApi) {
+          const cache = await caches.open(bucket);
+          const match = await cache.match(url);
+          if (match) {
+            cachedHit = true;
+            status = match.status;
+            bodyText = await match.text();
+          }
+        } else if (memoryCache.has(`${app.id}:${url}`)) {
+          cachedHit = true;
+          const item = memoryCache.get(`${app.id}:${url}`);
+          status = item.status;
+          bodyText = item.body;
+        }
+      }
+
+
+      if (!cachedHit) {
+        try {
+          const res = await fetch(url, { cache: "no-store" });
+          status = res.status;
+          bodyText = await res.text();
+          if (app.cacheEnabled && res.ok) {
+            if (hasCacheApi) {
+              const cache = await caches.open(bucket);
+              await cache.put(url, new Response(bodyText, { status }));
+            } else {
+              memoryCache.set(`${app.id}:${url}`, { status, body: bodyText });
+            }
+          }
+        } catch (err) {
+          status = 502;
+          bodyText = err.message;
+        }
+      }
+
+
+      const rtt = Math.max(1, Math.round(performance.now() - outStart));
+
+
+      // HOP 2: INBOUND RESPONSE FRAME (<- IN)
+      const inPacket = createPacketRecord({
+        appId: app.id,
+        direction: "IN",
+        hop: cachedHit ? "IN-1 (CACHE HIT)" : "IN-1 (NET PAYLOAD)",
+        url,
+        port,
+        state: cachedHit ? "CACHE HIT" : `HTTP ${status}`,
+        status,
+        sizeBytes: new Blob([bodyText]).size,
+        durationMs: cachedHit ? Math.min(rtt, 3) : rtt,
+        unwanted: status >= 400
+      });
+
+
+      const verdict = evaluatePacketPolicy(inPacket);
+      if (verdict && verdict.unwanted) {
+        inPacket.unwanted = true;
+        inPacket.state = verdict.reason || "FLAGGED";
+      }
+
+
+      packetLog.unshift(inPacket);
+      await plugins.emit("onPacket", inPacket);
+
+
+      // Keep buffer bounded
+      if (packetLog.length > 80) packetLog.length = 80;
+      renderAll();
+    }
+
+
+    function createPacketRecord({ appId, direction, hop, url, port, state, status, sizeBytes, durationMs, unwanted }) {
+      return {
+        id: `pkt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        seq: packetSeq++,
+        appId,
+        direction,
+        hop,
+        url,
+        shortUrl: url.replace(/^https?:\/\//, "").slice(0, 38) + (url.length > 46 ? "..." : ""),
+        port,
+        state,
+        status,
+        sizeBytes,
+        durationMs,
+        unwanted,
+        timestamp: new Date().toLocaleTimeString()
+      };
+    }
+
+
+    /**
+     * 4. SIMULATE UNWANTED PACKETS & FLUSH ENGINE
+     */
+    async function simulateUnwantedPacket() {
+      const app = getActiveApp();
+      const samples = [
+        { dir: "IN", url: "http://127.0.0.1:8080/telemetry/beacon-noise", port: 8080, status: 429, state: "UNWANTED BEACON" },
+        { dir: "OUT", url: "http://127.0.0.1:3000/debug/unused-poll", port: 3000, status: 404, state: "STALE POLL" },
+        { dir: "IN", url: "https://tracker.invalid.local/pixel.gif", port: 443, status: 403, state: "UNSOLICITED IN" }
+      ];
+      const pick = samples[Math.floor(Math.random() * samples.length)];
+      const pkt = createPacketRecord({
+        appId: app.id,
+        direction: pick.dir,
+        hop: `${pick.dir}-NOISE`,
+        url: pick.url,
+        port: pick.port,
+        state: pick.state,
+        status: pick.status,
+        sizeBytes: 512,
+        durationMs: 12,
+        unwanted: true
+      });
+      packetLog.unshift(pkt);
+      await plugins.emit("onPacket", pkt);
+      renderAll();
+    }
+
+
+    async function flushPackets(predicate, reason) {
+      const before = packetLog.length;
+      const kept = [];
+      const removed = [];
+
+
+      for (const pkt of packetLog) {
+        if (predicate(pkt)) {
+          removed.push(pkt);
+        } else {
+          kept.push(pkt);
+        }
+      }
+
+
+      packetLog = kept;
+      const count = before - kept.length;
+      totalFlushedPackets += count;
+      await plugins.emit("onFlush", { count, reason, removed });
+      renderAll();
+    }
+
+
+    function flushSinglePacket(id) {
+      flushPackets((p) => p.id === id, "Manual single packet flush");
+    }
+
+
+    /**
+     * 5. PORT PROBE & PORT FLUSHER
+     */
+    async function probeSinglePort(portObj) {
+      if (portObj.flushed) {
+        portObj.status = "FLUSHED";
+        portObj.isOpen = false;
+        return portObj;
+      }
+
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 600);
+      const start = performance.now();
+
+
+      try {
+        await fetch(`http://127.0.0.1:${portObj.port}/`, { mode: "no-cors", signal: controller.signal });
+        portObj.isOpen = true;
+        portObj.status = `OPEN (${Math.round(performance.now() - start)}ms)`;
+      } catch (err) {
+        portObj.isOpen = false;
+        portObj.status = err.name === "AbortError" ? "TIMEOUT" : "CLOSED";
+      } finally {
+        clearTimeout(timer);
+      }
+      return portObj;
+    }
+
+
+    async function sweepAllPorts() {
+      for (const p of monitoredPorts) {
+        await probeSinglePort(p);
+      }
+      logEvent("Completed local port sweep across monitored ports.");
+      renderAll();
+    }
+
+
+    async function toggleFlushPort(portNum) {
+      const target = monitoredPorts.find((p) => p.port === portNum);
+      if (!target) return;
+      target.flushed = !target.flushed;
+      if (target.flushed) {
+        target.isOpen = false;
+        target.status = "FLUSHED";
+        await plugins.emit("onPortFlush", target);
+        // Also flush any packets currently associated with that port
+        await flushPackets((pkt) => pkt.port === portNum, `Port :${portNum} flushed`);
+      } else {
+        target.status = "UNPROBED";
+        logEvent(`Restored port :${portNum} (${target.service})`);
+        renderAll();
+      }
+    }
+
+
+    /**
+     * 6. UI RENDERING
+     */
+    function logEvent(msg) {
+      const el = document.getElementById("event-log");
+      const line = document.createElement("div");
+      line.className = "log-line";
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      el.prepend(line);
+      while (el.children.length > 50) el.removeChild(el.lastChild);
+    }
+
+
+    function renderAll() {
+      const app = getActiveApp();
+
+
+      // Left: Apps
+      const appListEl = document.getElementById("app-list");
+      appListEl.innerHTML = networkApps
+        .map(
+          (a) => `
+          <div class="item-card ${a.id === app.id ? "active" : ""}" data-app="${a.id}">
+            <div class="item-header">
+              <span class="item-name">${a.name}</span>
+              <span class="pill ${a.cacheEnabled ? "hit" : "miss"}">${a.cacheEnabled ? "CACHE ON" : "BYPASS"}</span>
+            </div>
+            <div class="item-meta">${a.category} • ${a.endpoints.length} endpoints</div>
+          </div>
+        `
+        )
+        .join("");
+      appListEl.querySelectorAll(".item-card").forEach((card) => {
+        card.onclick = () => {
+          activeAppId = card.dataset.app;
+          renderAll();
+        };
+      });
+
+
+      // Left: Plugins
+      const pluginListEl = document.getElementById("plugin-list");
+      pluginListEl.innerHTML = Array.from(plugins.plugins.values())
+        .map(
+          (p) => `
+          <div class="item-card" data-plugin="${p.id}">
+            <div class="item-header">
+              <span class="item-name">${p.name}</span>
+              <span class="pill ${p.enabled ? "open" : "blocked"}">${p.enabled ? "ON" : "OFF"}</span>
+            </div>
+            <div style="font-size:0.73rem; color:var(--text-muted);">${p.description}</div>
+          </div>
+        `
+        )
+        .join("");
+      pluginListEl.querySelectorAll(".item-card").forEach((card) => {
+        card.onclick = () => {
+          plugins.toggle(card.dataset.plugin);
+          renderAll();
+        };
+      });
+
+
+      // Center Header & Endpoints
+      document.getElementById("active-app-title").textContent = `${app.name} — Full Out⇄In Trace`;
+      document.getElementById("toggle-cache-policy").checked = app.cacheEnabled;
+
+
+      const epSelect = document.getElementById("endpoint-select");
+      const currentVal = epSelect.value;
+      epSelect.innerHTML = app.endpoints.map((ep) => `<option value="${ep}">${ep}</option>`).join("");
+      if (app.endpoints.includes(currentVal)) epSelect.value = currentVal;
+
+
+      // Metrics
+      const appPackets = packetLog.filter((p) => p.appId === app.id);
+      const outCount = appPackets.filter((p) => p.direction === "OUT").length;
+      const inCount = appPackets.filter((p) => p.direction === "IN").length;
+      const unwantedCount = appPackets.filter((p) => p.unwanted).length;
+      const cacheHits = appPackets.filter((p) => p.state === "CACHE HIT").length;
+      const hitRatio = inCount ? Math.round((cacheHits / inCount) * 100) : 0;
+
+
+      document.getElementById("metric-out").textContent = outCount;
+      document.getElementById("metric-in").textContent = inCount;
+      document.getElementById("metric-unwanted").textContent = unwantedCount;
+      document.getElementById("metric-hit-ratio").textContent = `${hitRatio}%`;
+      document.getElementById("metric-flushed").textContent = totalFlushedPackets;
+
+
+      // Filter Packet Table
+      const dirFilter = document.getElementById("dir-filter").value;
+      const textFilter = document.getElementById("packet-filter-input").value.trim().toLowerCase();
+
+
+      const filtered = appPackets.filter((p) => {
+        if (dirFilter === "OUT" && p.direction !== "OUT") return false;
+        if (dirFilter === "IN" && p.direction !== "IN") return false;
+        if (dirFilter === "UNWANTED" && !p.unwanted) return false;
+        if (textFilter) {
+          const hay = `${p.url} ${p.port} ${p.state} ${p.hop} ${p.status}`.toLowerCase();
+          if (!hay.includes(textFilter)) return false;
+        }
+        return true;
+      });
+
+
+      const tbody = document.getElementById("packet-table-body");
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:18px;">No traced packets match the current filter.</td></tr>`;
+      } else {
+        tbody.innerHTML = filtered
+          .map(
+            (p) => `
+            <tr class="${p.unwanted ? "flagged-row" : ""}">
+              <td>
+                <div>#${p.seq}</div>
+                <div style="font-size:0.68rem; color:var(--text-muted);">${p.hop}</div>
+              </td>
+              <td>
+                <span class="pill ${p.direction === "OUT" ? "out" : "in"}">
+                  ${p.direction === "OUT" ? "OUT →" : "← IN"}
+                </span>
+              </td>
+              <td>
+                <div>${p.shortUrl}</div>
+                <div style="font-size:0.68rem; color:var(--text-muted);">Port :${p.port} • ${p.timestamp}</div>
+              </td>
+              <td>
+                <span class="pill ${p.unwanted ? "flushed" : p.state === "CACHE HIT" ? "hit" : "miss"}">
+                  ${p.state}
+                </span>
+              </td>
+              <td>${p.sizeBytes} B • ${p.durationMs}ms</td>
+              <td>
+                <button class="danger" style="padding:3px 7px; font-size:0.72rem;" onclick="flushSinglePacket('${p.id}')">Flush</button>
+              </td>
+            </tr>
+          `
+          )
+          .join("");
+      }
+
+
+      // Right: Port Grid
+      const portGrid = document.getElementById("port-grid");
+      portGrid.innerHTML = monitoredPorts
+        .map(
+          (p) => `
+          <div class="port-tile ${p.flushed ? "flushed-port" : ""}">
+            <div class="port-top">
+              <span class="port-number">:${p.port}</span>
+              <span class="pill ${p.flushed ? "flushed" : p.isOpen ? "open" : "closed"}">
+                ${p.flushed ? "FLUSHED" : p.isOpen ? "OPEN" : "CLOSED"}
+              </span>
+            </div>
+            <div class="port-service">${p.service} • ${p.status}</div>
+            <button
+              class="${p.flushed ? "" : "danger"}"
+              style="padding:3px 6px; font-size:0.72rem; margin-top:2px;"
+              onclick="toggleFlushPort(${p.port})"
+            >
+              ${p.flushed ? "Restore Port" : "Flush Port"}
+            </button>
+          </div>
+        `
+        )
+        .join("");
+    }
+
+
+    /**
+     * 7. EVENT LISTENERS
+     */
+    document.getElementById("toggle-cache-policy").addEventListener("change", (e) => {
+      getActiveApp().cacheEnabled = e.target.checked;
+      logEvent(`Cache for ${getActiveApp().name}: ${e.target.checked ? "ON" : "OFF"}`);
+      renderAll();
+    });
+
+
+    document.getElementById("btn-trace-cached").addEventListener("click", () => {
+      traceBidirectionalExchange(document.getElementById("endpoint-select").value, false);
+    });
+
+
+    document.getElementById("btn-trace-live").addEventListener("click", () => {
+      traceBidirectionalExchange(document.getElementById("endpoint-select").value, true);
+    });
+
+
+    document.getElementById("btn-run-trace").addEventListener("click", async () => {
+      const app = getActiveApp();
+      // Runs full Out -> In -> Out -> In sequence across endpoints
+      for (const ep of app.endpoints) {
+        await traceBidirectionalExchange(ep, false);
+      }
+    });
+
+
+    document.getElementById("btn-inject-noise").addEventListener("click", simulateUnwantedPacket);
+
+
+    document.getElementById("btn-flush-unwanted").addEventListener("click", () => {
+      flushPackets((p) => p.unwanted, "All unwanted/flagged packets");
+    });
+
+
+    document.getElementById("btn-flush-matching").addEventListener("click", () => {
+      const dirFilter = document.getElementById("dir-filter").value;
+      const textFilter = document.getElementById("packet-filter-input").value.trim().toLowerCase();
+      const appId = getActiveApp().id;
+
+
+      flushPackets((p) => {
+        if (p.appId !== appId) return false;
+        if (dirFilter === "OUT" && p.direction !== "OUT") return false;
+        if (dirFilter === "IN" && p.direction !== "IN") return false;
+        if (dirFilter === "UNWANTED" && !p.unwanted) return false;
+        if (textFilter) {
+          const hay = `${p.url} ${p.port} ${p.state} ${p.hop} ${p.status}`.toLowerCase();
+          return hay.includes(textFilter);
+        }
+        return true;
+      }, "Filtered packet flush");
+    });
+
+
+    document.getElementById("btn-flush-ports").addEventListener("click", async () => {
+      for (const p of monitoredPorts) {
+        if (!p.isOpen && !p.flushed) {
+          p.flushed = true;
+          p.status = "FLUSHED";
+          await plugins.emit("onPortFlush", p);
+        }
+      }
+      renderAll();
+    });
+
+
+    document.getElementById("btn-clear-cache").addEventListener("click", async () => {
+      const app = getActiveApp();
+      if ("caches" in window) await caches.delete(`netscope-v2:${app.id}`);
+      for (const key of Array.from(memoryCache.keys())) {
+        if (key.startsWith(`${app.id}:`)) memoryCache.delete(key);
+      }
+      logEvent(`Flushed CacheStorage bucket for ${app.name}`);
+      renderAll();
+    });
+
+
+    document.getElementById("btn-apply-script").addEventListener("click", () => {
+      evaluatePacketPolicy = compilePolicy(document.getElementById("adaptive-script").value);
+      logEvent("Updated adaptive packet/port filter policy.");
+    });
+
+
+    document.getElementById("btn-add-port").addEventListener("click", async () => {
+      const val = Number(document.getElementById("custom-port-input").value);
+      if (val >= 1 && val <= 65535 && !monitoredPorts.some((p) => p.port === val)) {
+        const newPort = { port: val, service: "Custom", status: "UNPROBED", isOpen: false, flushed: false };
+        monitoredPorts.push(newPort);
+        await probeSinglePort(newPort);
+        document.getElementById("custom-port-input").value = "";
+        renderAll();
+      }
+    });
+
+
+    document.getElementById("btn-probe-ports").addEventListener("click", sweepAllPorts);
+    document.getElementById("dir-filter").addEventListener("change", renderAll);
+    document.getElementById("packet-filter-input").addEventListener("input", renderAll);
+
+
+    // Boot
+    renderAll();
+    sweepAllPorts();
+  </script>
+</body>
+</html>
